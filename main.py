@@ -1,5 +1,5 @@
 import pandas as pd
-import numpy as np
+# import numpy as np
 import matplotlib.pyplot as plt
 import xgboost as xgb
 import os
@@ -40,9 +40,9 @@ def return_ticket(s):
 
 
 ##MAIN
-if os.path.exists("./newtrain.csv") and os.path.exists("./newtest.csv"):
-	train = pd.read_csv('newtrain.csv')
-	test = pd.read_csv('./newtest.csv')
+if os.path.exists("doc/newtrain.csv") and os.path.exists("doc/newtest.csv"):
+	train = pd.read_csv('doc/newtrain.csv')
+	test = pd.read_csv('doc/newtest.csv')
 else:
 	train = pd.read_csv('doc/train.csv')
 	test = pd.read_csv('doc/test.csv')
@@ -78,8 +78,8 @@ else:
 	mask = train['PassengerId'] < 892
 	train, test = train[mask], train[~mask]
 
-	train.to_csv('./newtrain.csv', index = False)
-	test.to_csv('./newtest.csv', index = False)
+	train.to_csv('doc/newtrain.csv', index = False)
+	test.to_csv('doc/newtest.csv', index = False)
 
 	Grph = train.groupby(['Fare', 'Survived']).size().unstack().fillna(0)
 	Grph.plot(kind='bar');
@@ -97,12 +97,10 @@ else:
 	Grph.plot(kind='bar');
 	plt.show()
 
+submit = pd.read_csv('doc/gender_submission.csv')
 target_train = train['Survived']
 train = train.drop(['Survived', 'PassengerId'], axis = 1)
 test = test.drop(['Survived', 'PassengerId'], axis = 1)
-
-submit = pd.read_csv('doc/gender_submission.csv')
-
 
 X_train, X_test, Y_train, Y_test = train_test_split(train, target_train,test_size =  0.25, random_state=0)
 Y_test = Y_test.values.ravel()
@@ -111,7 +109,9 @@ Y_train = Y_train.values.ravel()
 modelX = xgb.XGBClassifier(learning_rate = 0.01, max_depth = 3, n_estimators = 250)
 modelX.fit(X_train, Y_train)
 res = modelX.predict(X_test).astype(int)
-print("accuracy_score = %f"% accuracy_score(Y_test, res))
-resf = modelX.predict(test).astype(int)
-submit['Survived'] = resf
+print("accuracy score = %f"% accuracy_score(Y_test, res))
+print("MSE = %f"% mean_squared_error(Y_test, res))
+
+result = modelX.predict(test).astype(int)
+submit['Survived'] = result
 submit.to_csv('./submit.csv', index = False)
